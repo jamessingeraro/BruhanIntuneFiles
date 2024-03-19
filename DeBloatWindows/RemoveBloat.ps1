@@ -734,7 +734,7 @@ If ($null -ne $ProvisionedPackage)
 }
 
 ##Tweak reg permissions
-invoke-webrequest -uri "https://github.com/jamessingeraro/BruhanIntuneFiles/blob/main/DeBloatWindows/SetACL.exe" -outfile "C:\Windows\Temp\SetACL.exe"
+invoke-webrequest -uri "https://icrnergbackup.blob.core.windows.net/intune/DeBloat/SetACL.exe" -outfile "C:\Windows\Temp\SetACL.exe"
 C:\Windows\Temp\SetACL.exe -on "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Communications" -ot reg -actn setowner -ownr "n:$everyone"
  C:\Windows\Temp\SetACL.exe -on "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Communications" -ot reg -actn ace -ace "n:$everyone;p:full"
 
@@ -870,6 +870,69 @@ foreach ($sid in $UserSIDs) {
     }
 }
 }
+
+############################################################################################################
+#                                             Clear Start Menu                                             #
+#                                                                                                          #
+############################################################################################################
+write-host "Clearing Start Menu"
+#Delete layout file if it already exists
+
+##Check windows version
+$version = Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption
+if ($version -like "*Windows 10*") {
+    write-host "Windows 10 Detected"
+    write-host "Removing Current Layout"
+    If(Test-Path C:\Windows\StartLayout.xml)
+
+    {
+    
+    Remove-Item C:\Windows\StartLayout.xml
+    
+    }
+    write-host "Creating Default Layout"
+    #Creates the blank layout file
+    
+    Write-Output "<LayoutModificationTemplate xmlns:defaultlayout=""http://schemas.microsoft.com/Start/2014/FullDefaultLayout"" xmlns:start=""http://schemas.microsoft.com/Start/2014/StartLayout"" Version=""1"" xmlns=""http://schemas.microsoft.com/Start/2014/LayoutModification"">" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " <LayoutOptions StartTileGroupCellWidth=""6"" />" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " <DefaultLayoutOverride>" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " <StartLayoutCollection>" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " <defaultlayout:StartLayout GroupCellWidth=""6"" />" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " </StartLayoutCollection>" >> C:\Windows\StartLayout.xml
+    
+    Write-Output " </DefaultLayoutOverride>" >> C:\Windows\StartLayout.xml
+    
+    Write-Output "</LayoutModificationTemplate>" >> C:\Windows\StartLayout.xml
+}
+if ($version -like "*Windows 11*") {
+    write-host "Windows 11 Detected"
+    write-host "Removing Current Layout"
+    If(Test-Path "C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml")
+
+    {
+    
+    Remove-Item "C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml"
+    
+    }
+    
+$blankjson = @'
+{ 
+    "pinnedList": [ 
+      { "desktopAppId": "MSEdge" }, 
+      { "packagedAppId": "Microsoft.WindowsStore_8wekyb3d8bbwe!App" }, 
+      { "packagedAppId": "desktopAppId":"Microsoft.Windows.Explorer" } 
+    ] 
+  }
+'@
+
+$blankjson | Out-File "C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\LayoutModification.xml" -Encoding utf8 -Force
+}
+
 
 ############################################################################################################
 #                                              Remove Xbox Gaming                                          #
@@ -1190,7 +1253,7 @@ $A = Start-Process -FilePath "C:\Program Files\HP\Documentation\Doc_uninstall.cm
 
 ##Remove HP Connect Optimizer if setup.exe exists
 if (test-path -Path 'C:\Program Files (x86)\InstallShield Installation Information\{6468C4A5-E47E-405F-B675-A70A70983EA6}\setup.exe') {
-invoke-webrequest -uri "https://github.com/jamessingeraro/BruhanIntuneFiles/blob/main/DeBloatWindows/HPConnOpt.iss" -outfile "C:\Windows\Temp\HPConnOpt.iss"
+invoke-webrequest -uri "https://icrnergbackup.blob.core.windows.net/intune/DeBloat/HPConnOpt.iss" -outfile "C:\Windows\Temp\HPConnOpt.iss"
 
 &'C:\Program Files (x86)\InstallShield Installation Information\{6468C4A5-E47E-405F-B675-A70A70983EA6}\setup.exe' @('-s', '-f1C:\Windows\Temp\HPConnOpt.iss')
 }
@@ -1615,7 +1678,7 @@ if ($mcafeeinstalled -eq "true") {
 ### Download McAfee Consumer Product Removal Tool ###
 write-host "Downloading McAfee Removal Tool"
 # Download Source
-$URL = 'https://github.com/jamessingeraro/BruhanIntuneFiles/blob/main/DeBloatWindows/mcafeeclean.zip'
+$URL = 'https://icrnergbackup.blob.core.windows.net/intune/DeBloat/mcafeeclean.zip'
 
 # Set Save Directory
 $destination = 'C:\ProgramData\Debloat\mcafee.zip'
